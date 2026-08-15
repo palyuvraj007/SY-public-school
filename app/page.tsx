@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 // --- DATA STRUCTURES ---
-interface Student {
+type Student = {
   id: number;
   fullName: string;
   fatherName: string;
@@ -13,10 +13,10 @@ interface Student {
   permAddress: string;
   resAddress: string;
   targetClass: string;
-  assignedSection: string;
-  assignedHouse: string;
-  feeStatus: 'Paid' | 'Pending';
-}
+  section: string;     // 👈 Makes sure 'section' is valid
+  house: string;       // 👈 Makes sure 'house' is valid
+  feeStatus: string;   // 👈 Makes sure 'feeStatus' is valid
+};
 
 interface Teacher {
   id: number;
@@ -62,9 +62,9 @@ interface HouseInfo {
 export default function Home() {
   const [selectedClass, setSelectedClass] = useState<string>("PG");
 
-  const prePrimaryClasses = ["PG", "Nursery", "LKG", "UKG"];
-  const prePrimarySections = ["Wonder World","Star World","Magic Kingdom"]; // Update to match your exact PG-UKG section names!
-  const StandardSections = ["A", "B", "C"];
+ const prePrimaryClasses = ["PG", "Nursery", "LKG", "UKG"];
+const prePrimarySections = ["Wonder World", "Star World", "Magic Kingdom"];
+const standardSections = ["A", "B", "C"];
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<'home' | 'students' | 'teachers' | 'houses' | 'admin' | 'attendance' | 'notices'>('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -133,7 +133,7 @@ export default function Home() {
   ];
 
   const fantasySections = ['Wonder World', 'Star World', 'Magic Kingdom'];
-  const standardSections = ['Section A', 'Section B', 'Section C'];
+ // const standardSections = ['Section A', 'Section B', 'Section C'];
 
   const getSectionsForClass = (cls: string) => {
     if (['PG', 'Nursery', 'LKG', 'UKG'].includes(cls)) {
@@ -201,46 +201,61 @@ export default function Home() {
 
   // --- HANDLERS ---
   const handleAddStudent = () => {
-    if (!studentFormRef.current) return;
-    const form = studentFormRef.current;
-    
-    const fullName = (form.querySelector('[name="fullName"]') as HTMLInputElement)?.value.trim();
-    const fatherName = (form.querySelector('[name="fatherName"]') as HTMLInputElement)?.value.trim();
-    const fatherMobile = (form.querySelector('[name="fatherMobile"]') as HTMLInputElement)?.value.trim();
-    const motherName = (form.querySelector('[name="motherName"]') as HTMLInputElement)?.value.trim();
-    const motherMobile = (form.querySelector('[name="motherMobile"]') as HTMLInputElement)?.value.trim();
-    const permAddress = (form.querySelector('[name="permAddress"]') as HTMLTextAreaElement)?.value.trim();
-    const resAddress = (form.querySelector('[name="resAddress"]') as HTMLTextAreaElement)?.value.trim();
-    const targetClass = (form.querySelector('[name="targetClass"]') as HTMLSelectElement)?.value || 'PG';
+  if (!studentFormRef.current) return;
+  const form = studentFormRef.current;
 
-    if (!fullName || !fatherName || !fatherMobile) {
-      alert('Please fill in required fields: Student Name, Father Name, Father Mobile');
-      return;
-    }
+  // Read values using form elements
+  const fullName = (form.querySelector('[name="fullName"]') as HTMLInputElement)?.value.trim() || '';
+  const fatherName = (form.querySelector('[name="fatherName"]') as HTMLInputElement)?.value.trim() || '';
+  const fatherMobile = (form.querySelector('[name="fatherMobile"]') as HTMLInputElement)?.value.trim() || '';
+  const motherName = (form.querySelector('[name="motherName"]') as HTMLInputElement)?.value.trim() || '';
+  const motherMobile = (form.querySelector('[name="motherMobile"]') as HTMLInputElement)?.value.trim() || '';
+  const permAddress = (form.querySelector('[name="permAddress"]') as HTMLTextAreaElement)?.value.trim() || '';
+  const resAddress = (form.querySelector('[name="resAddress"]') as HTMLTextAreaElement)?.value.trim() || '';
+  
+  const targetClass = (form.querySelector('[name="targetClass"]') as HTMLSelectElement)?.value || selectedClass || 'PG';
+  const targetSection = (form.querySelector('[name="targetSection"]') as HTMLSelectElement)?.value || 'A';
 
-    const available = getSectionsForClass(targetClass);
-    const randomSec = available[Math.floor(Math.random() * available.length)];
-    const assignedHouse = Houses[Math.floor(Math.random() * Houses.length)];
+  // Debug Check: Press F12 in browser -> Console to view this output
+  console.log("Submitting Student:", { fullName, fatherName, fatherMobile, targetClass, targetSection });
 
-    const newStudent: Student = {
-      id: Date.now(),
-      fullName,
-      fatherName,
-      motherName,
-      fatherMobile,
-      motherMobile,
-      permAddress,
-      resAddress,
-      targetClass,
-      assignedSection: `${targetClass} - ${randomSec}`,
-      assignedHouse,
-      feeStatus: 'Pending'
-    };
+  if (!fullName || !fatherName || !fatherMobile) {
+    alert('Please fill in required fields: Student Name, Father Name, Father Mobile');
+    return;
+  }
 
-    setStudents(prev => [...prev, newStudent]);
-    form.reset();
-    showToast(`✨ Registered ${fullName} -> Sorted into ${assignedHouse}!`);
+  // Assign random house if Houses array exists
+  const assignedHouse = (typeof Houses !== 'undefined' && Houses.length > 0)
+    ? Houses[Math.floor(Math.random() * Houses.length)]
+    : 'Red';
+
+  const newStudent: Student = {
+    id: Date.now(),
+    fullName,
+    fatherName,
+    motherName,
+    fatherMobile,
+    motherMobile,
+    permAddress,
+    resAddress,
+    targetClass,
+    section: targetSection,
+    house: assignedHouse,
+    feeStatus: 'Pending'
   };
+
+  // Append new student to state
+  setStudents((prev) => [...prev, newStudent]);
+
+  // Reset Form
+  form.reset();
+  setSelectedClass('PG');
+
+  // Trigger Toast Notification
+  if (typeof showToast === 'function') {
+    showToast(`🎓 Registered ${fullName} -> Class ${targetClass} (${targetSection})!`);
+  }
+};
 
   const handleAddTeacher = () => {
     if (!teacherFormRef.current) return;
@@ -344,7 +359,7 @@ export default function Home() {
   };
 
   const sidebarSectionStudents = selectedSidebarSection 
-    ? students.filter(s => s.assignedSection === selectedSidebarSection)
+    ? students.filter(s => s.section === selectedSidebarSection)
     : [];
 
   const houseData = [
@@ -451,29 +466,56 @@ export default function Home() {
             </div>
 
             {/* CLASSES MENU IN SIDEBAR */}
-            <div className="py-4 space-y-2">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">
-                🏫 Classes & Roster
-              </h3>
-              <div className="space-y-1">
-                {allClassSections.map((sec) => {
-                  const count = students.filter(s => s.assignedSection === sec).length;
-                  return (
-                    <button
-                      key={sec}
-                      onClick={() => {
-                        setSelectedSidebarSection(sec);
-                        setIsSidebarOpen(false);
-                      }}
-                      className="w-full text-left flex justify-between items-center px-3 py-2 rounded-xl font-bold text-xs text-slate-700 hover:bg-slate-100 border border-transparent transition-all cursor-pointer"
-                    >
-                      <span>🏰 {sec}</span>
-                      <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-black">{count}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+<div className="py-4 space-y-2">
+  <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">
+    🏫 Classes & Roster
+  </h3>
+  <div className="space-y-1">
+    {allClassSections.map((sec) => {
+  // Extract Class and Section from strings like "PG - Wonder World" or "Class 1 - Section A"
+  const count = students.filter((s) => {
+        if (!s.targetClass || !s.section) return false;
+
+        // Strip prefixes if present to compare clean values
+        const cleanClass = s.targetClass.replace(/^Class\s*/i, '').trim();
+        const cleanSection = s.section.replace(/^Section\s*/i, '').trim();
+
+        const isPrePrimary = ['PG', 'Nursery', 'LKG', 'UKG'].includes(s.targetClass);
+
+        // Build exact sidebar format string
+        const formattedName = isPrePrimary
+          ? `${s.targetClass} - ${s.section}`
+          : `Class ${cleanClass} - Section ${cleanSection}`;
+
+        return (
+          formattedName === sec ||
+          s.section === sec ||
+          `${s.targetClass} - ${s.section}` === sec
+        );
+      }).length;
+
+  return (
+    <button
+      key={sec}
+      onClick={() => {
+        setSelectedSidebarSection(sec);
+        setIsSidebarOpen(false);
+      }}
+      className={`w-full text-left flex justify-between items-center px-3 py-2 rounded-xl font-bold text-xs transition-all ${
+        selectedSidebarSection === sec 
+          ? 'bg-amber-900 text-amber-100 shadow-sm' 
+          : 'text-slate-700 hover:bg-slate-100'
+      }`}
+    >
+      <span>🏫 {sec}</span>
+      <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-black">
+        {count}
+      </span>
+    </button>
+  );
+})}
+  </div>
+</div>
           </div>
         </div>
       )}
@@ -507,42 +549,80 @@ export default function Home() {
         </div>
       )}
 
-      {/* CLASS ROSTER POPUP MODAL */}
-      {selectedSidebarSection && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-slate-300 w-full max-w-lg p-6 rounded-2xl shadow-2xl relative text-slate-800">
-            <button onClick={() => setSelectedSidebarSection(null)} className="absolute top-4 right-4 text-2xl font-black text-slate-400 hover:text-red-600 cursor-pointer">✕</button>
+      {/* STUDENT ROSTER POPUP MODAL */}
+{selectedSidebarSection && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-bold text-slate-900">
+          Students in <span className="text-amber-900">{selectedSidebarSection}</span>
+        </h3>
+        <button 
+          onClick={() => setSelectedSidebarSection(null)}
+          className="text-slate-400 hover:text-slate-600 font-bold"
+        >
+          ✕
+        </button>
+      </div>
 
-            <h2 className="text-xl font-black border-b pb-3 mb-2 text-slate-900 font-serif">
-              Students in <span className="text-amber-900">{selectedSidebarSection}</span>
-            </h2>
+      <div className="space-y-2 max-h-80 overflow-y-auto py-2">
+        {(() => {
+          const sectionStudents = students.filter((s) => {
+            if (!s.targetClass || !s.section) return false;
 
-            {sidebarSectionStudents.length === 0 ? (
-              <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 my-4">
-                <p className="text-slate-500 font-semibold text-sm">No student registered in this section yet.</p>
+            const cleanClass = s.targetClass.replace(/^Class\s*/i, '').trim();
+            const cleanSection = s.section.replace(/^Section\s*/i, '').trim();
+            const isPrePrimary = ['PG', 'Nursery', 'LKG', 'UKG'].includes(s.targetClass);
+
+            const formattedName = isPrePrimary
+              ? `${s.targetClass} - ${s.section}`
+              : `Class ${cleanClass} - ${cleanSection}`;
+
+            return (
+              formattedName === selectedSidebarSection ||
+              s.section === selectedSidebarSection ||
+              `${s.targetClass} - ${s.section}` === selectedSidebarSection
+            );
+          });
+
+          if (sectionStudents.length === 0) {
+            return (
+              <div className="p-8 text-center bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+                <p className="text-sm font-semibold text-slate-500">
+                  No student registered in this section yet.
+                </p>
               </div>
-            ) : (
-              <div className="max-h-80 overflow-y-auto space-y-2 my-4 pr-1">
-                {sidebarSectionStudents.map((s, idx) => (
-                  <div key={s.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center">
-                    <div>
-                      <p className="font-extrabold text-slate-900 text-sm">{idx + 1}. {s.fullName}</p>
-                      <p className="text-xs text-slate-500 font-medium">House: <strong className="text-amber-900">{s.assignedHouse}</strong> | Father: {s.fatherName}</p>
-                    </div>
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${s.feeStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                      {s.feeStatus}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            );
+          }
 
-            <button onClick={() => setSelectedSidebarSection(null)} className="w-full bg-slate-900 text-white font-bold py-2.5 rounded-xl hover:bg-slate-800 transition-colors text-sm cursor-pointer">
-              Close Roster
-            </button>
-          </div>
-        </div>
-      )}
+          return sectionStudents.map((student) => (
+            <div 
+              key={student.id} 
+              className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center"
+            >
+              <div>
+                <p className="font-bold text-sm text-slate-900">{student.fullName}</p>
+                <p className="text-xs text-slate-500 font-medium">
+                  Father: {student.fatherName} | Mobile: {student.fatherMobile}
+                </p>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-1 bg-amber-100 text-amber-900 rounded-full">
+                {student.house || 'Red'}
+              </span>
+            </div>
+          ));
+        })()}
+      </div>
+
+      <button
+        onClick={() => setSelectedSidebarSection(null)}
+        className="w-full mt-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-sm transition-all"
+      >
+        Close Roster
+      </button>
+    </div>
+  </div>
+)}
 
       {/* MAIN CONTAINER */}
       <main className="max-w-6xl w-full mx-auto p-6 flex-1">
@@ -717,7 +797,7 @@ export default function Home() {
               {houseData.map(house => {
                 const headTeacherId = houseHeads[house.name];
                 const headTeacher = teachers.find(t => t.id === headTeacherId);
-                const houseStudents = students.filter(s => s.assignedHouse === house.name);
+                const houseStudents = students.filter(s => s.house === house.name);
 
                 return (
                   <div key={house.name} className={`p-6 rounded-3xl border-2 ${house.bg} shadow-xs space-y-4`}>
@@ -937,7 +1017,23 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {allClassSections.map((sec) => {
-                const secStudents = students.filter(s => s.assignedSection === sec);
+                const secStudents = students.filter((s) => {
+  if (!s.targetClass || !s.section) return false;
+
+  const cleanClass = s.targetClass.replace(/^Class\s*/i, '').trim();
+  const cleanSection = s.section.replace(/^Section\s*/i, '').trim();
+  const isPrePrimary = ['PG', 'Nursery', 'LKG', 'UKG'].includes(s.targetClass);
+
+  const formattedName = isPrePrimary
+    ? `${s.targetClass} - ${s.section}`
+    : `Class ${cleanClass} - ${cleanSection}`;
+
+  return (
+    formattedName === sec ||
+    s.section === sec ||
+    `${s.targetClass} - ${s.section}` === sec
+  );
+});
                 return (
                   <div key={sec} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                     <h3 className="font-extrabold text-slate-900 text-base">{sec}</h3>
@@ -951,7 +1047,7 @@ export default function Home() {
                           <div key={s.id} className="flex justify-between items-center text-xs p-2 bg-white rounded-lg border border-slate-200">
                             <div>
                               <p className="font-bold text-slate-800">{s.fullName}</p>
-                              <p className="text-[10px] text-amber-900 font-black">{s.assignedHouse}</p>
+                              <p className="text-[10px] text-amber-900 font-black">{s.house}</p>
                             </div>
                             <button
                               onClick={() => toggleFeeStatus(s.id)}
