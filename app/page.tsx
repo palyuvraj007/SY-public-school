@@ -60,6 +60,11 @@ interface HouseInfo {
 }
 
 export default function Home() {
+  const [selectedClass, setSelectedClass] = useState<string>("PG");
+
+  const prePrimaryClasses = ["PG", "Nursery", "LKG", "UKG"];
+  const prePrimarySections = ["Wonder World","Star World","Magic Kingdom"]; // Update to match your exact PG-UKG section names!
+  const StandardSections = ["A", "B", "C"];
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<'home' | 'students' | 'teachers' | 'houses' | 'admin' | 'attendance' | 'notices'>('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -780,69 +785,88 @@ export default function Home() {
         )}
 
         {/* STUDENT REGISTRATION PAGE */}
-        {activeTab === 'students' && (
-          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm max-w-3xl mx-auto">
-            <div className="flex justify-between items-center border-b pb-4 mb-6">
-              <h2 className="text-2xl font-black text-slate-900 font-serif">🎓 Student Registration</h2>
-              <span className="bg-amber-100 text-amber-900 text-xs font-black px-3 py-1 rounded-full">{students.length} Added</span>
-            </div>
+{activeTab === 'students' && (
+  <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm max-w-3xl mx-auto">
+    <div className="flex justify-between items-center border-b pb-4 mb-6">
+      <h2 className="text-2xl font-black text-slate-900 font-serif">🎓 Student Registration</h2>
+      <span className="bg-amber-100 text-amber-900 text-xs font-black px-3 py-1 rounded-full">{students.length} Added</span>
+    </div>
 
-            <form ref={studentFormRef} onSubmit={(e) => e.preventDefault()} className="space-y-4">
-              <div>
-                <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Student Full Name *</label>
-                <input name="fullName" type="text" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
-              </div>
+    <form ref={studentFormRef} onSubmit={(e) => e.preventDefault()} className="space-y-4">
+      <div>
+        <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Student Full Name *</label>
+        <input name="fullName" type="text" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
+      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Father's Name *</label>
-                  <input name="fatherName" type="text" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
-                </div>
-                <div>
-                  <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Father's Mobile Number *</label>
-                  <input name="fatherMobile" type="tel" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
-                </div>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Father's Name *</label>
+          <input name="fatherName" type="text" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
+        </div>
+        <div>
+          <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Father's Mobile Number *</label>
+          <input name="fatherMobile" type="tel" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
+        </div>
+      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Mother's Name</label>
-                  <input name="motherName" type="text" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
-                </div>
-                <div>
-                  <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Mother's Mobile Number</label>
-                  <input name="motherMobile" type="tel" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
-                </div>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Mother's Name</label>
+          <input name="motherName" type="text" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
+        </div>
+        <div>
+          <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Mother's Mobile Number</label>
+          <input name="motherMobile" type="tel" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
+        </div>
+      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Permanent Address</label>
-                  <textarea name="permAddress" rows={2} className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
-                </div>
-                <div>
-                  <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Residential Address</label>
-                  <textarea name="resAddress" rows={2} className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
-                </div>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Permanent Address</label>
+          <textarea name="permAddress" rows={2} className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
+        </div>
+        <div>
+          <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Residential Address</label>
+          <textarea name="resAddress" rows={2} className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden" />
+        </div>
+      </div>
 
-              <div>
-                <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Class *</label>
-                <select name="targetClass" defaultValue="PG" className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden">
-                  {classesList.map(cls => <option key={cls} value={cls}>{cls}</option>)}
-                </select>
-              </div>
-
-              <button 
-                type="button" 
-                onClick={handleAddStudent} 
-                className="w-full bg-amber-900 text-amber-100 font-black py-3 rounded-xl hover:bg-amber-950 active:scale-[0.99] transition-all shadow-md cursor-pointer"
-              >
-                + Save & Sort Student 
-              </button>
-            </form>
-          </div>
-        )}
+      {/* Class and Dynamic Section in a 2-column grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Class *</label>
+          <select 
+            name="targetClass" 
+            value={selectedClass} 
+            onChange={(e) => setSelectedClass(e.target.value)}
+            className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden"
+          >
+            {classesList.map(cls => <option key={cls} value={cls}>{cls}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1">Section *</label>
+          <select 
+            name="targetSection" 
+            className="w-full border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 bg-white focus:border-amber-700 focus:outline-hidden"
+          >
+            {prePrimaryClasses.includes(selectedClass)
+              ? prePrimarySections.map(sec => <option key={sec} value={sec}>{sec}</option>)
+              : standardSections.map(sec => <option key={sec} value={sec}>Section {sec}</option>)
+            }
+          </select>
+        </div>
+      </div>
+      <button 
+        type="button" 
+        onClick={handleAddStudent} 
+        className="w-full bg-amber-900 text-amber-100 font-black py-3 rounded-xl hover:bg-amber-950 active:scale-[0.99] transition-all shadow-md cursor-pointer"
+      >
+        + Save & Sort Student 
+      </button>
+    </form>
+  </div>
+)}
 
         {/* TEACHER FORM */}
         {activeTab === 'teachers' && (
