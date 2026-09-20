@@ -1,5 +1,6 @@
 'use client';
 
+import { supabase } from '@/app/lib/supabase';
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -54,17 +55,24 @@ function StudentPortalContent() {
   const standardSections = ['Section A', 'Section B', 'Section C'];
 
   // Load saved students
-  useEffect(() => {
-    const savedStudents = localStorage.getItem('school_students_data');
-    if (savedStudents) {
-      try {
-        setStudents(JSON.parse(savedStudents));
-      } catch (err) {
-        console.error('Failed to parse saved students:', err);
-      }
+ useEffect(() => {
+  async function fetchStudents() {
+    setIsLoaded(false);
+    const { data, error } = await supabase
+      .from('students')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching students:', error.message);
+    } else if (data) {
+      setStudents(data);
     }
     setIsLoaded(true);
-  }, []);
+  }
+
+  fetchStudents();
+}, []);
 
   // Sync class filter if passed from sidebar URL
   useEffect(() => {
@@ -86,25 +94,44 @@ function StudentPortalContent() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    let availableSections = standardSections;
-    if (prePrimarySections[formData.targetClass]) {
-      availableSections = prePrimarySections[formData.targetClass];
-    }
+  let availableSections = standardSections;
+  if (prePrimarySections[formData.targetClass]) {
+    availableSections = prePrimarySections[formData.targetClass];
+  }
 
-    const randomSection = availableSections[Math.floor(Math.random() * availableSections.length)];
+  const randomSection = availableSections[Math.floor(Math.random() * availableSections.length)];
+  const assignedSection = `${formData.targetClass} - ${randomSection}`;
 
-    const newStudent: Student = {
-      id: Date.now(),
-      ...formData,
-      assignedSection: `${formData.targetClass} - ${randomSection}`
-    };
+  // Insert data into Supabase table
+  const { data, error } = await supabase
+    .from('students')
+    .insert([
+      {
+        fullName: formData.fullName,
+        fatherName: formData.fatherName,
+        motherName: formData.motherName,
+        fatherMobile: formData.fatherMobile,
+        motherMobile: formData.motherMobile,
+        permAddress: formData.permAddress,
+        resAddress: formData.resAddress,
+        targetClass: formData.targetClass,
+        assignedSection: assignedSection,
+      },
+    ])
+    .select();
 
-    setStudents([...students, newStudent]);
+  if (error) {
+    console.error('Error inserting student:', error.message);
+    alert('Error registering student: ' + error.message);
+  } else if (data && data.length > 0) {
+    // Add saved student to state
+    setStudents([...students, data[0]]);
     setActiveClassFilter(formData.targetClass);
 
+    // Reset form fields
     setFormData({
       fullName: '',
       fatherName: '',
@@ -113,11 +140,12 @@ function StudentPortalContent() {
       motherMobile: '',
       permAddress: '',
       resAddress: '',
-      targetClass: 'Class 1'
+      targetClass: 'Class 1',
     });
 
-    alert(`Student registered successfully!`);
-  };
+    alert('Student registered successfully in Supabase!');
+  }
+};
 
   const handleClearAll = () => {
     if (confirm('Are you sure you want to delete all saved student data?')) {
